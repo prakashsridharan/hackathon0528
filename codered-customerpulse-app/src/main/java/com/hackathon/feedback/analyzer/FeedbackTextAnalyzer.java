@@ -1,5 +1,12 @@
 package com.hackathon.feedback.analyzer;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
@@ -25,6 +32,8 @@ public class FeedbackTextAnalyzer {
             for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
                 Tree tree = sentence.get(SentimentCoreAnnotations.AnnotatedTree.class);
                 int sentiment = RNNCoreAnnotations.getPredictedClass(tree);
+               // System.out.println("tree" +tree.toString());
+                
                 String partText = sentence.toString();
                 if (partText.length() > longest) {
                     mainSentiment = sentiment;
@@ -44,7 +53,7 @@ public class FeedbackTextAnalyzer {
     private String toCss(int sentiment) {
         switch (sentiment) {
         case 4:
-            return "VERY POSITIVE";
+            return "POSITIVE";
         case 3:
             return "POSITIVE";
         case 2:
@@ -52,13 +61,41 @@ public class FeedbackTextAnalyzer {
         case 1:
             return "NEGATIVE";
         case 0:
-            return "VERY NEGATIVE";
+            return "NEGATIVE";
         default:
-            return "";
+            return "NEUTRAL";
         }
     }
+    
+    
+    public static void generateOutputText(String path) {
+    	Path inputFilePath = Paths.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered", path);
+    	Charset charset = Charset.forName("US-ASCII");
+    	 StringBuilder outStr = new StringBuilder();
+    	try (BufferedReader reader = Files.newBufferedReader(inputFilePath, charset)) {
+    	    String line = null;
+    	    while ((line = reader.readLine()) != null) {
+    	    	 FeedbackTextAnalyzer sentimentAnalyzer = new FeedbackTextAnalyzer();
+    	    	 FeedbackText output = sentimentAnalyzer.findSentiment(line);
+    	         outStr.append(output.getCssClass()).append(System.getProperty("line.separator"));
+    	    }
+    	    Path outFilePath = Paths.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered", "output.txt");
+	        try (
+	        	BufferedWriter writer = Files.newBufferedWriter(outFilePath, charset)) {
+	            writer.write(outStr.toString(), 0, outStr.toString().length());
+	        } catch (IOException x) {
+	            System.err.format("IOException: %s%n", x);
+	        }
 
+    	} catch (IOException x) {
+    	    System.err.format("IOException: %s%n", x);
+    	}
+    	
+    }
     public static void main(String[] args) {
+    	generateOutputText("inputsample.txt");
+    }
+    /*public static void main(String[] args) {
     	
         FeedbackTextAnalyzer sentimentAnalyzer = new FeedbackTextAnalyzer();
         FeedbackText FeedbackText1 = sentimentAnalyzer.findSentiment("Blazing fast internet speeds... I'm blown away ");
@@ -91,5 +128,5 @@ public class FeedbackTextAnalyzer {
         
         FeedbackText FeedbackText10 = sentimentAnalyzer.findSentiment("It's been a crazy day... traffic is horrible ");
         System.out.println("FeedbackText10" +FeedbackText10);
-    }
+    }*/
 }
