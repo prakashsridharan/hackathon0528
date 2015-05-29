@@ -81,15 +81,11 @@ public class CustomFeedbackTextAnalyzer {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
-
-			
 			POSTagger.generateOutput();
 			
 		} catch (IOException x) {
 			System.err.format("IOException: %s%n", x);
 		}
-
 	}
 
 	public static void main(String[] args) {

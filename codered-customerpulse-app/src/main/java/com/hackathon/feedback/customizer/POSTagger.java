@@ -78,8 +78,6 @@ public class POSTagger {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
-				
 				System.out.println(token +"-" + tagsArr[counter]);
 				counter++;
 			}
@@ -129,6 +127,26 @@ public class POSTagger {
 		
 		System.out.println("Input insertParsedData" + word + pos + negation + parentId + id);
 		Connection conn = ConnectionUtils.getConnection();
+		
+		if(conn == null) {
+			
+			try {
+				Class.forName("oracle.jdbc.driver.OracleDriver");
+			} catch (ClassNotFoundException e) {
+				System.out.println("Where is your Oracle JDBC Driver?");
+				e.printStackTrace();
+			}
+			System.out.println("Oracle JDBC Driver Registered!");
+			try {
+				conn = DriverManager.getConnection(
+						"jdbc:oracle:thin:@localhost:1521:xe", "test", "test");
+			} catch (SQLException e) {
+				System.out.println("Connection Failed! Check output console");
+				e.printStackTrace();
+			}
+		}
+		
+		
 		conn.setAutoCommit(false);
 		StringBuilder sb = new StringBuilder();
 		

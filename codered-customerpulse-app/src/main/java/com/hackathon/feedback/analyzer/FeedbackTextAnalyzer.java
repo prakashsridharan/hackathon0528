@@ -53,17 +53,17 @@ public class FeedbackTextAnalyzer {
     private String toCss(int sentiment) {
         switch (sentiment) {
         case 4:
-            return "POSITIVE";
+            return "Positive";
         case 3:
-            return "POSITIVE";
+            return "Positive";
         case 2:
-            return "NEUTRAL";
+            return "Neutral";
         case 1:
-            return "NEGATIVE";
+            return "Negative";
         case 0:
-            return "NEGATIVE";
+            return "Negative";
         default:
-            return "NEUTRAL";
+            return "Neutral";
         }
     }
     
@@ -77,7 +77,7 @@ public class FeedbackTextAnalyzer {
     	    while ((line = reader.readLine()) != null) {
     	    	 FeedbackTextAnalyzer sentimentAnalyzer = new FeedbackTextAnalyzer();
     	    	 FeedbackText output = sentimentAnalyzer.findSentiment(line);
-    	         outStr.append(output.getCssClass()).append(System.getProperty("line.separator"));
+    	         outStr.append(output.getCssClass() + " - " +line ).append(System.getProperty("line.separator"));
     	    }
     	    Path outFilePath = Paths.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered", "output.txt");
 	        try (
@@ -94,6 +94,8 @@ public class FeedbackTextAnalyzer {
     }
     public static void main(String[] args) {
     	generateOutputText("inputsample.txt");
+    	
+    	System.out.print("EXIT=====>");
     }
     /*public static void main(String[] args) {
     	

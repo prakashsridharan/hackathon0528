@@ -22,6 +22,8 @@ public class ConnectionUtils {
 			System.out.println("Connection Failed! Check output console");
 			e.printStackTrace();
 		}
+		
+		
 		return connection;
 	}
 }
