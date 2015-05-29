@@ -7,89 +7,38 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.sql.SQLException;
 import java.util.Properties;
 
-import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.rnn.RNNCoreAnnotations;
-import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
-import edu.stanford.nlp.trees.GrammaticalStructure;
-import edu.stanford.nlp.trees.GrammaticalStructureFactory;
-import edu.stanford.nlp.trees.PennTreebankLanguagePack;
-import edu.stanford.nlp.trees.Tree;
-import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
-import edu.stanford.nlp.trees.TreebankLanguagePack;
-import edu.stanford.nlp.trees.TypedDependency;
-import edu.stanford.nlp.util.CoreMap;
+import com.hackathon.feedback.customizer.POSTagger;
 
 public class CustomFeedbackTextAnalyzer {
 
-	public FeedbackText findSentiment(String line) {
-
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize, ssplit, parse, sentiment");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-
-		int mainSentiment = 0;
-		if (line != null && line.length() > 0) {
-			int longest = 0;
-			Annotation annotation = pipeline.process(line);
-
-			for (CoreMap sentence : annotation
-					.get(CoreAnnotations.SentencesAnnotation.class)) {
-				
-				 Tree tree = sentence.get(SentimentCoreAnnotations.AnnotatedTree.class);
-	                int sentiment = RNNCoreAnnotations.getPredictedClass(tree);
-	                
-	                
-	                
-	               traverseTree(tree);
-			/*	Tree tree = sentence.get(TreeAnnotation.class);
-
-				TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-				
-				GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-				
-				GrammaticalStructure gs = gsf.newGrammaticalStructure(tree);
-				
-				System.out.println(gs.getNodes());
-				
-				
-				Collection<TypedDependency> td = gs
-						.typedDependenciesCollapsed();
-				System.out.println("tes23232t" + td);
-
-				Object[] list = td.toArray();
-				System.out.println(list.length);
-				TypedDependency typedDependency;
-				for (Object object : list) {
-					typedDependency = (TypedDependency) object;
-					System.out.println("Depdency Name"
-							+ typedDependency.dep().nodeString() + " :: "
-							+ "Node" + typedDependency.reln());
-				}*/
-
+	public FeedbackText findSentiment(String line, int id) {
+        Properties props = new Properties();
+        props.setProperty("annotators", "tokenize, ssplit, parse, sentiment");
+        int mainSentiment = 0;
+        if (line != null && line.length() > 0) {
+        	try {
+				POSTagger.insertRecord(line, id);
+			} catch (SQLException e1) {
+				e1.printStackTrace();
 			}
-		}
-		/*
-		 * if (mainSentiment == 2 || mainSentiment > 4 || mainSentiment < 0) {
-		 * return null; }
-		 */
-		FeedbackText FeedbackText = new FeedbackText(line, toCss(mainSentiment));
-		return FeedbackText;
+        	try {
+				new POSTagger().setPOSTagger(line, id);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        /*if (mainSentiment == 2 || mainSentiment > 4 || mainSentiment < 0) {
+            return null;
+        }*/
+        FeedbackText FeedbackText = new FeedbackText(line, toCss(mainSentiment));
+        return FeedbackText;
 
-	}
+    }
 
-	private void traverseTree(Tree tree) {
-		System.out.println("Parent :: "+tree.label().value());
-		for(int i = 1; i <=tree.getChildrenAsList().size(); i++){
-			Tree childNode = tree.getChild(i);
-			System.out.println("Child Node :"+ childNode.label().value());
-			traverseTree(childNode);
-		}
-	}
 
 	private String toCss(int sentiment) {
 		switch (sentiment) {
@@ -108,7 +57,7 @@ public class CustomFeedbackTextAnalyzer {
 		}
 	}
 
-	public static void generateOutputText(String path) {
+	public static void generateOutputText(String path) throws SQLException {
 		Path inputFilePath = Paths
 				.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered",
 						path);
@@ -117,9 +66,13 @@ public class CustomFeedbackTextAnalyzer {
 		try (BufferedReader reader = Files.newBufferedReader(inputFilePath,
 				charset)) {
 			String line = null;
+			int counterId = 1;
+			// Delete Records
+			POSTagger.delteRecord();
+			
 			while ((line = reader.readLine()) != null) {
 				CustomFeedbackTextAnalyzer sentimentAnalyzer = new CustomFeedbackTextAnalyzer();
-				FeedbackText output = sentimentAnalyzer.findSentiment(line);
+				FeedbackText output = sentimentAnalyzer.findSentiment(line, counterId++);
 				outStr.append(output.getCssClass()).append(
 						System.getProperty("line.separator"));
 			}
@@ -140,7 +93,12 @@ public class CustomFeedbackTextAnalyzer {
 	}
 
 	public static void main(String[] args) {
-		generateOutputText("inputsample.txt");
+		try {
+			generateOutputText("inputsample.txt");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
