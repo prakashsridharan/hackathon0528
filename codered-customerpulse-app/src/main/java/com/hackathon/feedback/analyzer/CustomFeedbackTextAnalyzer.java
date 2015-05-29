@@ -69,23 +69,23 @@ public class CustomFeedbackTextAnalyzer {
 			int counterId = 1;
 			// Delete Records
 			POSTagger.delteRecord();
-			
 			while ((line = reader.readLine()) != null) {
 				CustomFeedbackTextAnalyzer sentimentAnalyzer = new CustomFeedbackTextAnalyzer();
 				FeedbackText output = sentimentAnalyzer.findSentiment(line, counterId++);
 				outStr.append(output.getCssClass()).append(
 						System.getProperty("line.separator"));
 			}
-			Path outFilePath = Paths
-					.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered",
-							"output.txt");
-			try (BufferedWriter writer = Files.newBufferedWriter(outFilePath,
-					charset)) {
-				writer.write(outStr.toString(), 0, outStr.toString().length());
-			} catch (IOException x) {
-				System.err.format("IOException: %s%n", x);
+			// Call  Stored Procedure
+			try {
+				POSTagger.callStoredProcedure();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+			
 
+			
+			POSTagger.generateOutput();
+			
 		} catch (IOException x) {
 			System.err.format("IOException: %s%n", x);
 		}

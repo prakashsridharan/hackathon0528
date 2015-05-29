@@ -17,12 +17,21 @@
 
 package com.hackathon.feedback.customizer;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.Arrays;
 
 import javax.sound.midi.Sequence;
@@ -104,14 +113,15 @@ public class POSTagger {
 		System.out.println(sb.toString());
 		PreparedStatement ps = conn.prepareStatement(sb.toString());
 		// Change batch size for this statement to 3
-		((OraclePreparedStatement) ps).setExecuteBatch(1);
+		//((OraclePreparedStatement) ps).setExecuteBatch(1);
 		ps.setInt(1, id);
 		ps.setString(2, input_text);
 		ps.setDate(3, new java.sql.Date(new java.util.Date().getTime()));
 		ps.executeUpdate();
-		((OraclePreparedStatement) ps).sendBatch(); // JDBC sends the queued
+		//((OraclePreparedStatement) ps).sendBatch(); // JDBC sends the queued
 		conn.commit();
 		ps.close();
+		conn.close();
 	}
 	
 	public static void insertParsedData(String word, String pos, String negation, int parentId, int id)
@@ -128,7 +138,7 @@ public class POSTagger {
 		
 		PreparedStatement ps = conn.prepareStatement(sb.toString());
 		// Change batch size for this statement to 3
-		((OraclePreparedStatement) ps).setExecuteBatch(1);
+	//	((OraclePreparedStatement) ps).setExecuteBatch(1);
 		ps.setInt(1, id);
 		ps.setInt(2, parentId);
 		ps.setString(3,word.toUpperCase());
@@ -136,9 +146,10 @@ public class POSTagger {
 		ps.setString(5,negation);
 		
 		ps.executeUpdate();
-		((OraclePreparedStatement) ps).sendBatch(); // JDBC sends the queued
+		//((OraclePreparedStatement) ps).sendBatch(); // JDBC sends the queued
 		conn.commit();
 		ps.close();
+		conn.close();
 	}
 	
 	
@@ -159,16 +170,47 @@ public class POSTagger {
 		conn.commit();
 		
 		preparedStatement.close();
-		
+		conn.close();
 		System.out.println(" dELETED" );
 	}
 	
-	public static void main(String[] args) {
-		try {
-			new POSTagger().setPOSTagger("This isn't fun", 12);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public static void generateOutput() throws SQLException {
+		System.out.println(" generateOutput" );
+		 Connection conn = ConnectionUtils.getConnection();
+		 Charset charset = Charset.forName("US-ASCII");
+		  Statement  stmt = null;
+		  String sql = "SELECT output_response FROM INPUT_DATA_REQUEST";
+		  stmt = conn.createStatement();
+	      ResultSet rs = stmt.executeQuery(sql);
+	      //STEP 5: Extract data from result set
+	      
+	      StringBuilder outStr = new StringBuilder();
+	      while(rs.next()){
+	    	  System.out.println(rs.getString(1));
+	    	  outStr.append(rs.getString(1)).append(
+						System.getProperty("line.separator"));
+	      }
+	      
+	      Path outFilePath = Paths
+					.get("D:\\github\\hackathon0528\\codered-customerpulse-app\\src\\main\\resources\\codered",
+							"output.txt");
+			try (BufferedWriter writer = Files.newBufferedWriter(outFilePath,
+					charset)) {
+				writer.write(outStr.toString(), 0, outStr.toString().length());
+			} catch (IOException x) {
+				System.err.format("IOException: %s%n", x);
+			}
+	}
+	
+	public static void callStoredProcedure() throws SQLException {
+		System.out.println(" callStoredProcedure" );
+		Connection conn = ConnectionUtils.getConnection();
+		 CallableStatement cStmt = conn.prepareCall("{call nlp_engine(?)}");
+		 cStmt.registerOutParameter(1, Types.INTEGER);
+		 cStmt.executeUpdate();
+		int outputCode =  cStmt.getInt(1);
+		cStmt.close();
+		conn.close();
+System.out.println(" callStoredProcedure" + outputCode);
 	}
 }
